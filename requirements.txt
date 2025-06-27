@@ -2,3 +2,8 @@ fastapi
 uvicorn
 sqlalchemy
 pydantic
+aiosmtplib
+python-multipart
+passlib
+email-validator
+jinja2
