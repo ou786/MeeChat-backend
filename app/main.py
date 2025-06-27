@@ -35,7 +35,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://meechat-osama-ussaids-projects.vercel.app/"],  # ✅ React dev server
+    allow_origins=["https://meechat.vercel.app", "https://meechat-osama-ussaids-projects.vercel.app"],  # ✅ React dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
