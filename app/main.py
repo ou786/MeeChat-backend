@@ -119,17 +119,22 @@ def verify_otp_and_register(payload: schemas.OtpVerificationRequest, db: Session
 
 @app.post("/login", response_model=schemas.UserOut)
 def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == payload.email).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+    try:
+        user = db.query(models.User).filter(models.User.email == payload.email).first()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+        if not pwd_context.verify(payload.password, user.hashed_password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-    if not pwd_context.verify(payload.password, user.hashed_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
+        return user
 
-    return user
+    except Exception as e:
+        print("Login Error:", str(e))  # ✅ Log the error to Render logs
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 
 online_users = {}
 
