@@ -2,6 +2,10 @@ from pydantic import BaseModel
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
 # ✅ NEW: Registration - Step 1 (Send OTP)
 class EmailOtpRequest(BaseModel):
     email: EmailStr

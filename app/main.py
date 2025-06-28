@@ -15,6 +15,7 @@ from datetime import datetime
 from .schemas import UserIdPayload  # or from schemas import ...
 from .schemas import SeenPayload
 from fastapi import BackgroundTasks
+from .schemas import PasswordResetRequest
 from sqlalchemy import or_
 from sqlalchemy import and_
 
@@ -138,17 +139,18 @@ def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
 
 
 @app.post("/request-password-reset")
-def request_password_reset(email: EmailStr = Body(...), db: Session = Depends(get_db)):
+def request_password_reset(payload: PasswordResetRequest, db: Session = Depends(get_db)):
+    email = payload.email  # extract email properly
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     otp = str(random.randint(100000, 999999))
-    user.reset_otp = otp  # Add `reset_otp` column in your User model if not already
+    user.reset_otp = otp
     user.otp_timestamp = datetime.utcnow()
     db.commit()
 
-    # Send Email
+    # Send email
     message = EmailMessage()
     message["From"] = EMAIL_USER
     message["To"] = email
@@ -163,6 +165,7 @@ def request_password_reset(email: EmailStr = Body(...), db: Session = Depends(ge
         await smtp.quit()
 
     BackgroundTasks().add_task(send_mail)
+
     return {"message": "OTP sent to your email"}
 
 
