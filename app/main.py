@@ -139,8 +139,12 @@ def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
 
 
 @app.post("/request-password-reset")
-def request_password_reset(payload: PasswordResetRequest, db: Session = Depends(get_db)):
-    email = payload.email  # extract email properly
+def request_password_reset(
+    payload: PasswordResetRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)  # ✅ Inject BackgroundTasks properly
+):
+    email = payload.email
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -150,7 +154,7 @@ def request_password_reset(payload: PasswordResetRequest, db: Session = Depends(
     user.otp_timestamp = datetime.utcnow()
     db.commit()
 
-    # Send email
+    # Email setup
     message = EmailMessage()
     message["From"] = EMAIL_USER
     message["To"] = email
@@ -164,7 +168,7 @@ def request_password_reset(payload: PasswordResetRequest, db: Session = Depends(
         await smtp.send_message(message)
         await smtp.quit()
 
-    BackgroundTasks().add_task(send_mail)
+    background_tasks.add_task(send_mail)  # ✅ Use injected object
 
     return {"message": "OTP sent to your email"}
 
