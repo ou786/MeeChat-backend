@@ -13,6 +13,8 @@ class User(Base):
     hashed_password = Column(String, nullable=True)
     is_verified = Column(Boolean, default=False)
     last_seen = Column(DateTime, default=datetime.utcnow)  # ✅ new field
+    reset_otp = Column(String, nullable=True)
+    otp_timestamp = Column(DateTime, nullable=True)
 
 
 

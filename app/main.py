@@ -14,6 +14,7 @@ import time
 from datetime import datetime
 from .schemas import UserIdPayload  # or from schemas import ...
 from .schemas import SeenPayload
+from fastapi import BackgroundTasks
 from sqlalchemy import or_
 from sqlalchemy import and_
 
@@ -134,6 +135,66 @@ def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
     except Exception as e:
         print("Login Error:", str(e))  # ✅ Log the error to Render logs
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+@app.post("/request-password-reset")
+def request_password_reset(email: EmailStr = Body(...), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    otp = str(random.randint(100000, 999999))
+    user.reset_otp = otp  # Add `reset_otp` column in your User model if not already
+    user.otp_timestamp = datetime.utcnow()
+    db.commit()
+
+    # Send Email
+    message = EmailMessage()
+    message["From"] = EMAIL_USER
+    message["To"] = email
+    message["Subject"] = "MeeChat Password Reset OTP"
+    message.set_content(f"Your OTP to reset your MeeChat password is: {otp}")
+
+    async def send_mail():
+        smtp = SMTP(hostname=EMAIL_HOST, port=EMAIL_PORT, start_tls=True)
+        await smtp.connect()
+        await smtp.login(EMAIL_USER, EMAIL_PASSWORD)
+        await smtp.send_message(message)
+        await smtp.quit()
+
+    BackgroundTasks().add_task(send_mail)
+    return {"message": "OTP sent to your email"}
+
+
+
+@app.post("/verify-reset-otp")
+def verify_reset_otp(email: EmailStr = Body(...), otp: str = Body(...), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user or user.reset_otp != otp:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+
+    time_diff = (datetime.utcnow() - user.otp_timestamp).total_seconds()
+    if time_diff > 600:  # 10 mins expiry
+        raise HTTPException(status_code=400, detail="OTP expired")
+
+    return {"message": "OTP verified"}
+
+
+
+
+@app.post("/reset-password")
+def reset_password(email: EmailStr = Body(...), new_password: str = Body(...), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    hashed_pw = CryptContext(schemes=["bcrypt"], deprecated="auto").hash(new_password)
+    user.hashed_password = hashed_pw
+    user.reset_otp = None  # Invalidate OTP
+    user.otp_timestamp = None
+    db.commit()
+
+    return {"message": "Password updated successfully"}
 
 
 online_users = {}
