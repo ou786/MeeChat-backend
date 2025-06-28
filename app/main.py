@@ -267,6 +267,19 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 def get_users(db: Session = Depends(get_db)):
     return db.query(models.User).all()
 
+
+@app.delete("/delete_user_by_email", status_code=200)
+def delete_user_by_email(email: EmailStr = Body(...), db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == email).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db.delete(user)
+    db.commit()
+
+    return {"message": f"User with email {email} deleted successfully."}
+
 @app.delete("/messages/{sender_id}/to/{receiver_id}")
 def delete_sent_messages(sender_id: int, receiver_id: int, db: Session = Depends(get_db)):
     db.query(models.Message).filter(
