@@ -204,9 +204,10 @@ def delete_sent_messages(sender_id: int, receiver_id: int, db: Session = Depends
     db.query(models.Message).filter(
         models.Message.sender_id == sender_id,
         models.Message.receiver_id == receiver_id
-    ).delete()
+    ).delete(synchronize_session=False)  # Added for safety
     db.commit()
-    return {"detail": "Messages deleted"}
+    return {"detail": "Sent messages deleted for sender only"}
+
 
 
 
