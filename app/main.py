@@ -192,9 +192,22 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
+
+
+
 @app.get("/users", response_model=list[schemas.UserOut])
 def get_users(db: Session = Depends(get_db)):
     return db.query(models.User).all()
+
+@app.delete("/messages/{sender_id}/to/{receiver_id}")
+def delete_sent_messages(sender_id: int, receiver_id: int, db: Session = Depends(get_db)):
+    db.query(models.Message).filter(
+        models.Message.sender_id == sender_id,
+        models.Message.receiver_id == receiver_id
+    ).delete()
+    db.commit()
+    return {"detail": "Messages deleted"}
+
 
 
 
