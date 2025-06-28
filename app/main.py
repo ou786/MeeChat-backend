@@ -281,4 +281,8 @@ def get_recent_chats(user_id: int, db: Session = Depends(get_db)):
 def read_root():
     return {"message": "FastAPI backend is running!"}
 
+@app.get("/test-cors")
+def test():
+    return {"msg": "CORS working"}
+
 
