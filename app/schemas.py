@@ -6,18 +6,18 @@ from pydantic import BaseModel, EmailStr, Field
 class PasswordResetRequest(BaseModel):
     email: EmailStr
 
-# ✅ NEW: Registration - Step 1 (Send OTP)
+# NEW: Registration - Step 1 (Send OTP)
 class EmailOtpRequest(BaseModel):
     email: EmailStr
     username: str  # User chooses a username at registration time
 
-# ✅ NEW: Registration - Step 2 (Verify OTP + Set Password)
+# NEW: Registration - Step 2 (Verify OTP + Set Password)
 class OtpVerificationRequest(BaseModel):
     email: EmailStr
     otp: str
     password: str = Field(..., min_length=6, description="Password must be at least 6 characters")
 
-# ✅ OPTIONAL: You can keep this if needed elsewhere
+
 class EmailPayload(BaseModel):
     email: EmailStr
 
@@ -33,7 +33,7 @@ class SeenPayload(BaseModel):
     to_user: int
 
 
-# 🔄 Updated to include username for frontend
+# Updated to include username for frontend
 class UserOut(BaseModel):
     id: int
     email: EmailStr

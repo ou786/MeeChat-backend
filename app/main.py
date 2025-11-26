@@ -142,7 +142,7 @@ def login(payload: schemas.LoginRequest, db: Session = Depends(get_db)):
 def request_password_reset(
     payload: PasswordResetRequest,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)  # ✅ Inject BackgroundTasks properly
+    db: Session = Depends(get_db)  # Inject BackgroundTasks properly
 ):
     email = payload.email
     user = db.query(models.User).filter(models.User.email == email).first()
@@ -168,7 +168,7 @@ def request_password_reset(
         await smtp.send_message(message)
         await smtp.quit()
 
-    background_tasks.add_task(send_mail)  # ✅ Use injected object
+    background_tasks.add_task(send_mail)  # Use injected object
 
     return {"message": "OTP sent to your email"}
 
@@ -252,7 +252,7 @@ def update_last_seen(payload: UserIdPayload, db: Session = Depends(get_db)):
 def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if db_user:
-        return db_user  # ✅ Return existing user instead of error
+        return db_user  # Return existing user instead of error
     new_user = models.User(username=user.username,profile_pic=user.profile_pic)
     db.add(new_user)
     db.commit()
